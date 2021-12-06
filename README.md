@@ -7,7 +7,7 @@ utools插件-redis高性能客户端
 ```
 npm install
 
-**uTools 开发者工具** 中将 `public/plugin.json` 加入到本地开发
+**uTools 开发者工具** 中将 `plugin.json` 加入到本地开发
 ```
 ### 功能说明
 1.实现了最常用的get、set、del、hset、hget、hetall、psubscribe功能</br>
@@ -18,4 +18,5 @@ npm install
   keys pre*
   ...
 ```
-3.实现了subscribe订阅功能，并支持频道通配
+3.实现了subscribe订阅功能，并支持频道通配</br>
+4.快速选择数据库

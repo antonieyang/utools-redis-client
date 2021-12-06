@@ -1,7 +1,7 @@
 {
-    "main": "index.html",
-    "preload": "preload.js",
-    "logo": "images/logo.png",
+    "main": "public/index.html",
+    "preload": "public/preload.js",
+    "logo": "public/images/logo.png",
     "features": [{
         "code": "redis",
         "explain": "Redis高性能客户端",
