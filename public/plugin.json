@@ -1,0 +1,14 @@
+{
+    "main": "index.html",
+    "preload": "preload.js",
+    "logo": "images/logo.png",
+    "features": [{
+        "code": "redis",
+        "explain": "Redis高性能客户端",
+        "cmds": [
+            "redis client",
+            "rc",
+            "rd"
+        ]
+    }]
+}

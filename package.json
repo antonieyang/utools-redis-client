@@ -1,0 +1,15 @@
+{
+    "name": "build",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "start": "node preload.js"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "jquery": "^3.6.0",
+        "node-static": "^0.7.11",
+        "redis": "^4.0.0",
+        "sweetalert2": "^11.2.1"
+    }
+}
