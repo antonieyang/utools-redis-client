@@ -55,54 +55,61 @@ var client;
 var isConnecting = false;
 window.connect = function(server, port, user, password) {
 
-        (async() => {
-            if (isConnecting) {
-                return;
+    (async() => {
+        if (isConnecting) {
+            return;
+        }
+        isConnecting = true;
+        var name = `${server}:${port}`;
+        var tServer = $(".server[name='" + name + "']");
+        client = redis.createClient({
+            url: `redis://${user}:${password}@${server}:${port}`
+        });
+
+        client.on('ready', function(res) {});
+
+        client.on('end', function(err) {
+            swal.fire(`${name}连接关闭`);
+            connClosed(tServer);
+        });
+
+        client.on('error', async function(err) {
+            swal.fire(`${name}连接失败`, err.message, "error");
+            connClosed(tServer);
+            try {
+                await client.quit();
+            } catch (error) {
+                console.log(error);
             }
-            isConnecting = true;
-            var name = `${server}:${port}`;
-            var tServer = $(".server[name='" + name + "']");
-            client = redis.createClient({
-                url: `redis://${user}:${password}@${server}:${port}`
-            });
 
-            client.on('ready', function(res) {});
+        });
 
-            client.on('end', function(err) {
-                swal.fire(`${name}连接关闭`);
-                tServer.children(".conStatus").attr("src", "./images/server.png").parent().attr("aria-label", "连接服务器");
-                tServer.find(".disImg").attr("class", "conImg");
-                $(".disableCon").attr("class", "conImg");
-                $(".conImg").attr("src", "./images/connect.png").parent().attr("aria-label", "连接服务器");
-                tServer.children(".serverSpan").css("color", "");
-                isConnecting = false;
-                $(".db").remove();
-                $("#exec").attr("disabled", "disabled");
-            });
+        client.on('connect', function() {
+            swal.fire(`${name}连接成功`);
+            tServer.children(".conStatus").attr("src", "./images/con-server.png");
+            tServer.find(".conImg").attr("class", "disImg").attr("src", "./images/disconnect.png").parent().attr("aria-label", "断开连接");
+            $(".conImg").attr("class", "disableCon").attr("src", "./images/disable.png").parent().attr("aria-label", "");
+            tServer.children(".serverSpan").css("color", "#1afa29");
+            $("#exec").removeAttr("disabled");
+            loadDb(name);
+            // quitSubClient();
 
-            client.on('error', function(err) {
-                swal.fire(`${name}连接失败`, err.message, "error");
-                client.quit();
-                tServer.find(".conImg").attr("src", "./images/connect.png");
-                console.log(err);
-                isConnecting = false;
-            });
+        });
+        tServer.find(".conImg").attr("src", "./images/loading.gif");
+        await client.connect();
+        currentClint = name;
+    })();
+}
 
-            client.on('connect', function() {
-                swal.fire(`${name}连接成功`);
-                tServer.children(".conStatus").attr("src", "./images/con-server.png");
-                tServer.find(".conImg").attr("class", "disImg").attr("src", "./images/disconnect.png").parent().attr("aria-label", "断开连接");
-                $(".conImg").attr("class", "disableCon").attr("src", "./images/disable.png").parent().attr("aria-label", "");
-                tServer.children(".serverSpan").css("color", "#1afa29");
-                $("#exec").removeAttr("disabled");
-                loadDb(name);
-                // quitSubClient();
-
-            });
-            tServer.find(".conImg").attr("src", "./images/loading.gif");
-            await client.connect();
-            currentClint = name;
-        })();
+window.connClosed = function(tServer) {
+        tServer.children(".conStatus").attr("src", "./images/server.png");
+        tServer.find(".disImg").attr("class", "conImg");
+        $(".disableCon").attr("class", "conImg");
+        $(".conImg").attr("src", "./images/connect.png").parent().attr("aria-label", "连接服务器");
+        tServer.children(".serverSpan").css("color", "");
+        isConnecting = false;
+        $(".db").remove();
+        $("#exec").attr("disabled", "disabled");
     }
     // window.quitSubClient = function() {
     //     (async() => {
