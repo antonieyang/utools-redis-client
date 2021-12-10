@@ -4,13 +4,27 @@ utools.onPluginReady(() => {
 })
 
 var currentClint = "";
-window.newServer = function() {
+var tName = "";
+window.newServer = function(name) {
+    tName = name;
     (async() => {
         const { value: formValues } = await Swal.fire({
             title: 'REDIS服务器',
             html: addServerHtml,
             focusConfirm: false,
             confirmButtonText: '增加服务器',
+            didOpen: () => {
+                if (tName) {
+                    const temp = servers.data[tName];
+                    if (temp) {
+                        const container = $(Swal.getHtmlContainer());
+                        container.find("#host").val(temp.server);
+                        container.find("#port").val(temp.port);
+                        container.find("#user").val(temp.user);
+                        container.find("#password").val(temp.password);
+                    }
+                }
+            },
             preConfirm: () => {
                 return [
                     document.getElementById('host').value,
@@ -30,7 +44,7 @@ window.newServer = function() {
                 }
             }
             var name = `${formValues[0]}:${formValues[1]}`;
-            if (servers.data[name]) {
+            if (!tName && servers.data[name]) {
                 Swal.fire("已存在同名服务器");
                 return;
             }
@@ -39,17 +53,31 @@ window.newServer = function() {
                 Swal.fire("新增失败", "服务器和端口号不能为空", "warning");
                 return;
             }
+            if (tName) {
+                const tServer = $(".server[name='" + tName + "']");
+                tServer.attr("name", name);
+                tServer.find(".serverSpan").html(name);
+                delete servers.data[tName];
+            } else {
+                appendServer(name);
+            }
             servers.data[name] = { "server": formValues[0], "port": parseInt(formValues[1]), "user": formValues[2], "password": formValues[3] };
             utools.db.put(servers);
-            appendServer(name);
+            servers = utools.db.get("servers");
         }
     })();
 }
 
 window.appendServer = function(key) {
-    $(".serverList").append("<span class='server' name='" + key + "'><img src='./images/server.png' class='conStatus'><span class='serverSpan' >" + key + "</span>" +
+    var newServer = $("<span class='server' name='" + key + "'><img src='./images/server.png' class='conStatus'><span class='serverSpan' >" + key + "</span>" +
+        "<span aria-label='删除服务器' class='img-circle status-icon hint--bottom-left'><img src='./images/delete.png' class='delImg'></span>" +
+        "<span aria-label='修改服务器' class='img-circle status-icon hint--bottom-left'><img src='./images/update.png' class='updImg'></span>" +
         "<span aria-label='连接服务器' class='img-circle status-icon hint--bottom-left'><img src='./images/connect.png' class='conImg'></span>" +
-        "<span aria-label='删除服务器' class='img-circle status-icon hint--bottom-left'><img src='./images/delete.png' class='delImg'></span><div class='dbList'></div></span>");
+        "<div class='dbList'></div></span>");
+    $(".serverList").append(newServer);
+    if ($(".disImg").length > 0) {
+        $(".conImg").hide();
+    }
 }
 var client;
 var isConnecting = false;
@@ -87,15 +115,16 @@ window.connect = function(server, port, user, password) {
         client.on('connect', function() {
             swal.fire(`${name}连接成功`);
             tServer.children(".conStatus").attr("src", "./images/con-server.png");
-            tServer.find(".conImg").attr("class", "disImg").attr("src", "./images/disconnect.png").parent().attr("aria-label", "断开连接");
-            $(".conImg").attr("class", "disableCon").attr("src", "./images/disable.png").parent().attr("aria-label", "");
+            tServer.find(".updImg,.delImg").hide();
+            tServer.find(".loading").attr("class", "disImg").attr("src", "./images/disconnect.png").parent().attr("aria-label", "断开连接");
             tServer.children(".serverSpan").css("color", "#1afa29");
             $("#exec").removeAttr("disabled");
             loadDb(name);
             // quitSubClient();
 
         });
-        tServer.find(".conImg").attr("src", "./images/loading.gif");
+        tServer.find(".conImg").attr("class", "loading").attr("src", "./images/loading.gif");
+        $(".conImg").hide();
         await client.connect();
         currentClint = name;
     })();
@@ -103,13 +132,15 @@ window.connect = function(server, port, user, password) {
 
 window.connClosed = function(tServer) {
         tServer.children(".conStatus").attr("src", "./images/server.png");
-        tServer.find(".disImg").attr("class", "conImg");
+        tServer.find(".disImg,.loading").attr("class", "conImg");
         $(".disableCon").attr("class", "conImg");
         $(".conImg").attr("src", "./images/connect.png").parent().attr("aria-label", "连接服务器");
+        $(".conImg").show();
         tServer.children(".serverSpan").css("color", "");
         isConnecting = false;
         $(".db").remove();
         $("#exec").attr("disabled", "disabled");
+        $(".updImg,.delImg").show();
     }
     // window.quitSubClient = function() {
     //     (async() => {

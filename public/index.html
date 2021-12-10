@@ -22,8 +22,8 @@
                 <div class="formPart">
                     <form class="form-horizontal">
                         <div class="form-group">
-                            <label class="col-sm-3 control-label" for="op">操作</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="op">操作</label>
+                            <div class="col-sm-10">
                                 <select class="form-control" id="op">
                                     <option value="get">get (获取字符串值)</option>
                                     <option value="set">set (设置字符串值)</option>
@@ -38,44 +38,44 @@
                             </div>
                         </div>
                         <div class="form-group key">
-                            <label class="col-sm-3 control-label" for="exampleInputPassword1">键</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputPassword1">键</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="key" placeholder="输入键key">
                             </div>
                         </div>
                         <div class="form-group cmd">
-                            <label class="col-sm-3 control-label" for="exampleInputPassword1">指令</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputPassword1">指令</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="cmd" placeholder="输入redis指令">
                             </div>
                         </div>
                         <div class="form-group field">
-                            <label class="col-sm-3 control-label" for="exampleInputFile">属性</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputFile">属性</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="field" placeholder="输入属性名field">
                             </div>
                         </div>
                         <div class="form-group value">
-                            <label class="col-sm-3 control-label" for="exampleInputFile">取值</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputFile">取值</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="value" placeholder="输入属性取值value">
                             </div>
                         </div>
                         <div class="form-group topic">
-                            <label class="col-sm-3 control-label" for="exampleInputFile">频道</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputFile">频道</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="topic" placeholder="输入需要监听的频道，支持通配">
                             </div>
                         </div>
                         <div class="form-group ptopic">
-                            <label class="col-sm-3 control-label" for="exampleInputFile">频道</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputFile">频道</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="ptopic" placeholder="输入需要推送消息的频道">
                             </div>
                         </div>
                         <div class="form-group message">
-                            <label class="col-sm-3 control-label" for="exampleInputFile">消息</label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-2 control-label" for="exampleInputFile">消息</label>
+                            <div class="col-sm-10">
                                 <input type="text" class="form-control" id="message" placeholder="输入需要推送的消息">
                             </div>
                         </div>
@@ -96,7 +96,6 @@
     var servers;
     var addServerHtml;
     $(function($) {
-
         var addServerObj = $.ajax({
             url: "addServer.html",
             async: false
@@ -111,6 +110,12 @@
                     appendServer(key);
                 })
             }
+
+            $(".leftPart").height($(window).height() - 1);
+            $(window).resize(function() {
+                $(".leftPart").height($(window).height() - 10);
+                $(".content").height(($(window).height() - $(".formPart").outerHeight(true) - 20) + "px")
+            })
             utools.setSubInput(function(obj) {
                 const text = obj.text;
                 if (!text)
@@ -140,6 +145,9 @@
             connect(serverData.server, serverData.port, serverData.user, serverData.password)
         }).on("click", ".disImg", function() {
             disconnect();
+        }).on("click", ".updImg", function() {
+            var name = $(this).parents(".server").attr("name");
+            newServer(name);
         }).on("click", ".delImg", function() {
             Swal.fire({
                 title: '您确定要删除该服务器?',
@@ -151,12 +159,16 @@
                 confirmButtonText: '是的，删!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    disconnect();
+                    if ($(this).parents(".server").find(".disImg").length > 0) {
+                        disconnect();
+                    }
+
                     var tServer = $(this).parents(".server");
                     var name = tServer.attr("name");
                     tServer.remove();
                     delete servers.data[name];
                     utools.db.put(servers);
+                    servers = utools.db.get("servers");
                     Swal.fire(
                         '删除成功!',
                         '',
